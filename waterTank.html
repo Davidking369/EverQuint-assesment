@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Water Tank Visualization</title>
+  <style>
+    body {
+      font-family: Arial;
+      text-align: center;
+      background: #0f172a;
+      color: white;
+    }
+
+    input {
+      padding: 8px;
+      width: 300px;
+      margin: 10px;
+    }
+
+    button {
+      padding: 8px 16px;
+      cursor: pointer;
+    }
+
+    svg {
+      margin-top: 20px;
+      background: #020617;
+      border: 1px solid #334155;
+    }
+
+    .block {
+      fill: #94a3b8;
+    }
+
+    .water {
+      fill: #38bdf8;
+      opacity: 0.7;
+      transition: all 0.5s ease;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h2> Water Tank (Trapping Rain Water)</h2>
+
+  <input id="input" value="0,4,0,0,0,6,0,6,4,0" />
+  <br/>
+  <button onclick="visualize()">Visualize</button>
+
+  <h3 id="result"></h3>
+
+  <svg id="canvas" width="600" height="300"></svg>
+
+<script>
+
+function trap(height) {
+  let n = height.length;
+  let leftMax = new Array(n).fill(0);
+  let rightMax = new Array(n).fill(0);
+
+  leftMax[0] = height[0];
+  for (let i = 1; i < n; i++) {
+    leftMax[i] = Math.max(leftMax[i-1], height[i]);
+  }
+
+  rightMax[n-1] = height[n-1];
+  for (let i = n-2; i >= 0; i--) {
+    rightMax[i] = Math.max(rightMax[i+1], height[i]);
+  }
+
+  let water = 0;
+  let waterArr = [];
+
+  for (let i = 0; i < n; i++) {
+    let w = Math.min(leftMax[i], rightMax[i]) - height[i];
+    if (w > 0) water += w;
+    waterArr.push(Math.max(0, w));
+  }
+
+  return { total: water, waterArr };
+}
+
+function visualize() {
+  const input = document.getElementById("input").value;
+  const height = input.split(",").map(Number);
+
+  const { total, waterArr } = trap(height);
+
+  document.getElementById("result").innerText = `💧 Water Stored: ${total}`;
+
+  const svg = document.getElementById("canvas");
+  svg.innerHTML = "";
+
+  const barWidth = 40;
+  const maxHeight = Math.max(...height) + 2;
+
+  height.forEach((h, i) => {
+    const x = i * barWidth;
+    const y = 300 - (h * 30);
+
+    // block
+    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    rect.setAttribute("x", x);
+    rect.setAttribute("y", y);
+    rect.setAttribute("width", barWidth - 5);
+    rect.setAttribute("height", h * 30);
+    rect.setAttribute("class", "block");
+    svg.appendChild(rect);
+
+    // water
+    if (waterArr[i] > 0) {
+      const waterHeight = waterArr[i] * 30;
+      const waterY = y - waterHeight;
+
+      const waterRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      waterRect.setAttribute("x", x);
+      waterRect.setAttribute("y", y);
+      waterRect.setAttribute("width", barWidth - 5);
+      waterRect.setAttribute("height", 0);
+      waterRect.setAttribute("class", "water");
+
+      svg.appendChild(waterRect);
+
+      // animate
+      setTimeout(() => {
+        waterRect.setAttribute("y", waterY);
+        waterRect.setAttribute("height", waterHeight);
+      }, 100);
+    }
+  });
+}
+
+</script>
+
+</body>
+</html>
